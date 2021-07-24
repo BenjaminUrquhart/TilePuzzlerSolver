@@ -1,10 +1,14 @@
 package net.benjaminurquhart.tilepuzzlegen;
 
+import net.benjaminurquhart.tilepuzzlegen.Tile.Color;
+
 public class TileMaze {
 	
 	public static TileMaze parse(String... lines) {
 		for(String s : lines) {
 			if(s.length() != lines[0].length()) {
+				System.err.println(String.join("\n", lines));
+				System.err.printf("\n%s {} %s\n", s, lines[0]);
 				throw new IllegalArgumentException("all lines must be the same length");
 			}
 		}
@@ -17,7 +21,7 @@ public class TileMaze {
 		return new TileMaze(colors);
 	}
 	public static TileMaze parse(String map) {
-		return parse(map.split("\n"));
+		return parse(map.replace("\r", "").split("\n"));
 	}
 
 	public Direction move;
@@ -107,8 +111,25 @@ public class TileMaze {
 	}
 	
 	public void setPosition(int x, int y) {
+		Tile tile = getTile(x, y);
+		if(tile == null) {
+			throw new IllegalArgumentException("position out of bounds: " + x + ", " + y);
+		}
 		this.x = x;
 		this.y = y;
+	}
+	
+	public void prepare() {
+		Tile tile = getTile(x, y);
+		if(tile.getType() == Color.PURPLE) {
+			setFlavor(Flavor.LEMON);
+		}
+		else if(tile.getType() == Color.ORANGE) {
+			setFlavor(Flavor.ORANGE);
+		}
+		previous = null;
+		entry = Direction.RIGHT;
+		move = null;
 	}
 	
 	public int getX() {
@@ -151,7 +172,7 @@ public class TileMaze {
 		
 		for(int i = 0; i < height; i++) {
 			for(int j = 0; j < width; j++) {
-				if(j == x && i == y) {
+				if(TilePuzzleSolver.DEBUG && j == x && i == y) {
 					sb.append('X');
 				}
 				else {
