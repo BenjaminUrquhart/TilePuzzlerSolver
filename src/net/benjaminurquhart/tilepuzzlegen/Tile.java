@@ -71,6 +71,10 @@ public class Tile {
 	}
 	
 	private Set<Direction> computeAvailableDirections(Direction direction) {
+		if(type == null) {
+			return EnumSet.allOf(Direction.class);
+		}
+		
 		Direction entryDirection = this.entryDirection;
 		if(entryDirection == null) {
 			entryDirection = direction;
@@ -107,7 +111,14 @@ public class Tile {
 			
 			return dirs;
 		}
-		case PURPLE: return EnumSet.of(entryDirection);
+		case PURPLE: {
+			Tile next = maze.getTileRelative(entryDirection);
+			if(next != null && next.getType() == Color.RED) {
+				//System.err.printf("purple at %d %d -> red at %d %d\n", x, y, next.x, next.y);
+				return EnumSet.allOf(Direction.class);
+			}
+			return EnumSet.of(entryDirection);
+		}
 		}
 		
 		
@@ -115,25 +126,17 @@ public class Tile {
 	}
 	
 	public boolean canMoveIntoFrom(Direction direction) {
-		if(type == Color.BLUE && maze.getFlavor() == Flavor.ORANGE) {
+		if(type == Color.RED || (type == Color.BLUE && maze.getFlavor() == Flavor.ORANGE)) {
 			return false;
 		}
 		Tile other = maze.getTileRelative(x, y, direction.getOpposite());
-		if(other.type == Color.PURPLE && direction != other.entryDirection) {
-			return false;
-		}
-		return type != Color.RED; //getAvailableDirections(direction).contains(direction);
+
+		return other.getAvailableDirections(direction).contains(direction);
 	}
 	
 	public boolean moveIntoFrom(Direction direction) {
 		if(canMoveIntoFrom(direction)) {
 			Tile other = maze.getTileRelative(x, y, direction.getOpposite());
-			if(other.type == Color.PURPLE && direction != other.entryDirection) {
-				throw new IllegalStateException(String.format(
-						"\nIllegal movement: cannot move from %s (%d, %d) to %s (%d, %d), direction != entry (%s != %s)\nMoves: %s",
-						other.type.name(), other.x, other.y, type.name(), x, y, direction, other.entryDirection, TilePuzzleSolver.convertToList(maze)
-				));
-			}
 			maze.setPosition(x, y);
 			entryDirection = direction;
 			other.entryDirection = null;

@@ -28,6 +28,8 @@ public class TileMaze {
 	public Direction entry;
 	public TileMaze previous;
 	
+	public int delay;
+	
 	private int width, height;
 	private Flavor flavor;
 	private Tile[][] grid;
@@ -35,6 +37,20 @@ public class TileMaze {
 	
 	private TileMaze(int width, int height, Flavor flavor, int x, int y) {
 		this.entry = Direction.RIGHT;
+		
+		if(x >= width) {
+			x = width - 1;
+		}
+		if(x < 0) {
+			x = 0;
+		}
+		
+		if(y >= height) {
+			y = height -1;
+		}
+		if(y < 0) {
+			y = 0;
+		}
 		
 		this.grid = new Tile[height][width];
 		this.flavor = flavor;
@@ -101,6 +117,10 @@ public class TileMaze {
 		return grid[y][x];
 	}
 	
+	public Tile getTile() {
+		return getTile(x, y);
+	}
+	
 	public boolean attemptMove(Direction direction) {
 		Tile destination = getTileRelative(direction);
 		if(destination != null && destination.moveIntoFrom(direction)) {
@@ -130,6 +150,8 @@ public class TileMaze {
 		previous = null;
 		entry = Direction.RIGHT;
 		move = null;
+		
+		delay = 0;
 	}
 	
 	public int getX() {

@@ -29,12 +29,18 @@ public class TilePuzzleSolver {
 				".OBPBPGOB.PO.RPORRBB.R.GPOPOPOPBRGRGRGR",
 				"GPR.RRR.PBGB.GBRYYBPYROR.P.YB...RGRGRGR",
 				"RBBGPPBYRBBRO.ROOOO.YR.YRGBG.RR.GGGGRGG"
+				
+	Test Red Blocking:
+				"RRR",
+				"P..",
+				".RR",
+				".RR"
 	 */
 	
-	
 	public static boolean DEBUG = false, TEST = false;
+	
 	public static final int BLOCK_SIZE = 32;
-	public static final int MAZE_LENGTH = 400;
+	public static final int MAZE_LENGTH = 400, MAZE_HEIGHT = 4;
 	
 	private static final Tile.Color[] COLORS = Tile.Color.values();
 	
@@ -49,11 +55,13 @@ public class TilePuzzleSolver {
 		List<Direction> solution = null;
 		TileMaze maze = null;
 		
-		int currentLength = Math.min(BLOCK_SIZE, MAZE_LENGTH), prevLength = 0;
+		final int REAL_MAZE_LENGTH = MAZE_LENGTH + 1;
 		
-		Tile.Color[][] currentGrid = new Tile.Color[4][currentLength], 
-					   partialGrid = new Tile.Color[4][currentLength], 
-					   tmpGrid = new Tile.Color[4][0];
+		int currentLength = Math.min(BLOCK_SIZE, REAL_MAZE_LENGTH), prevLength = 0;
+		
+		Tile.Color[][] currentGrid = new Tile.Color[MAZE_HEIGHT][currentLength], 
+					   partialGrid = new Tile.Color[MAZE_HEIGHT][currentLength], 
+					   tmpGrid = new Tile.Color[MAZE_HEIGHT][0];
 		
 		TileMaze current, previous = null;
 		
@@ -64,7 +72,7 @@ public class TilePuzzleSolver {
 		
 		try {
 			while(!reachedEnd) {
-				if(currentLength == MAZE_LENGTH) {
+				if(currentLength == REAL_MAZE_LENGTH) {
 					reachedEnd = true;
 				}
 				partialAttempts = 0;
@@ -89,13 +97,13 @@ public class TilePuzzleSolver {
 				
 				System.err.printf("Found partial for %d (%d attempt(s), %d total)\n", currentLength, partialAttempts, totalAttempts);
 				
-				if(currentLength < MAZE_LENGTH) {
+				if(currentLength < REAL_MAZE_LENGTH) {
 					prevLength = currentLength;
 					
 					currentLength += BLOCK_SIZE - offset;
 					
-					if(currentLength > MAZE_LENGTH) {
-						currentLength = MAZE_LENGTH;
+					if(currentLength > REAL_MAZE_LENGTH) {
+						currentLength = REAL_MAZE_LENGTH;
 					}
 					
 					index += currentLength - prevLength;
@@ -127,6 +135,11 @@ public class TilePuzzleSolver {
 		}
 		
 		System.err.flush();
+		System.out.flush();
+		
+		for(int y = 0; y < partialGrid.length; y++) {
+			partialGrid[y] = Arrays.copyOfRange(partialGrid[y], 0, partialGrid[y].length - 1);
+		}
 		
 		System.out.println("Found possible chained solution, testing...");
 		long solveStart = System.currentTimeMillis();
@@ -134,6 +147,8 @@ public class TilePuzzleSolver {
 		long solveTime = System.currentTimeMillis() - solveStart;
 		if(solution == null) {
 			System.out.printf("Nope (%dms)\n", solveTime);
+			System.out.println(maze);
+			ImageIO.write(render(maze, null), "png", new File("maze-failed.png"));
 			return;
 		}
 		System.out.printf("Finished in %dms (verification took %dms)\n", System.currentTimeMillis() - start, solveTime);
@@ -144,10 +159,12 @@ public class TilePuzzleSolver {
 	}
 	
 	private static void test() throws Exception {
-		TileMaze maze = TileMaze.parse("y.ppobrgb.py.bygopbgpgoprrp.g.orgop...o.oybgprp.yyoygrgbpbogp.rrbpygoggopppbg.or.ob.yoyp.p.oyrppogggyogp..oyrgrrob..ropp.y.poybrgoporrgpoyob.o.gbgggggoboyopyorgpyy..ygpb.ogpop.ggbp.pbrogobpgpgyppggrgrgrpoyyroy.ogb.gyor.pgoog.ygrpop.ogpp.pogpggybb.br.r.g.gr.robb..obbrorg.gb..o.obbb.bpgbb.ypgpob.pyrpo.bbrbbpo..rgobporrgobpgoggogpp.rbr.bgbr.rbby.obbrrro.pbyoyr.bry..rp.obpbp.rbbgo.rgggoyypg..rggboopp\n" + 
-				"ybrygogpbgg.goyogpy.p.bbobyggbbggg.bryyogpy.gbgybgpgy.yg.bypryp.pbrggrgrog.gygpgpygrygopp...yoyopgyg.oyygrbrybpgbogyb..yooyyoyrgpb..rprr.bbybbg..ob.ogorob.rgopbgpggopyooorgroggpgoooo.oo.rpyygp.pb.gpbpby.p..opryyg.yprypgor.bpbbggogrrpggpb...g.bp.b.gpbbogbopboopryggbgb.o..gyy.ybpbbrogrgbopp.porrppg.bppgbpgobppyopbppop.y.g...yrpbppgogrobppyppgoy.pbbbrgypby.bgbgopo.ogp.p.yrp.grrg.oogbpbogpporyo.y.ygo\n" + 
-				".rorr.yopr.obpprprbrg.rgb.gpo.bpb.oor.pogyoo.y.p.ropbgpbgr.bgpb.bpgrpgb.gbyypo.pgbb.gpobyoybgbpbgpgrbbo.gbp...b.bbproypopgbgyry.obbboyrpypb.pp.grorpyppgg.by.yropb.bppgrporb.ypogo..rgoybogopypg.prb.ygogoo.pgppbrrgr.ooob.ybrp.g.opp.p.popyrp..bpobporroggprbpprg.gpoyg.rpg.oggboobrop..bgpogbo.oy.ppp.ogogpoogrobbg.obgrpry..pgrryy.pb..bboroy.b..oppbpbbgorbgyrybygrryrrgpybg.gyprg.bbgpbb.ygobgb..oooyrobrb\n" + 
-				"ooppbggp.bgggg.gogp.p.rgo.r.gyprgy.b.gg.ppp.gpbo..opppogpyroyr.p.pgbo.bgbyryygyogggy.rrg.o..go.bp.yrpor.oppbbbrgrpbbg.pogpbo.p.gobpbppboopoogp.ypgygb..bbbppgbbryobo.bppbopobbgpp.ypobbo.ybbog.ppy.r..yr.pporgbgpbgpg..o..ooy.yp.rorbgby.rrpp.oggppgrb.ypppooyogbyoy.borrorbbr..pbb.ogypprpbp..b.yrpyopgpboorypbo.o.rpro...b.obpobppoggryopgp.bg.bpb.ob.gog.gppp.b.op.pg.ygygp.oypyyopypbgbobyygg.oprybpgpgobby\n");
+		TileMaze maze = TileMaze.parse(
+				"RGG...YRBGYYRYO..PGBOOORYBYYBYBGGGRGGGR",
+				".OBPBPGOB.PO.RPORRBB.R.GPOPOPOPBRGRGRGR",
+				"GPR.RRR.PBGB.GBRYYBPYROR.P.YB...RGRGRGR",
+				"RBBGPPBYRBBRO.ROOOO.YR.YRGBG.RR.GGGGRGG"
+		);
 		ImageIO.write(solveAndRender(maze), "png", new File("maze-solved.png"));
 	}
 	
@@ -211,16 +228,17 @@ public class TilePuzzleSolver {
 		return render(maze, solve(maze));
 	}
 	
-	
 	public static List<Direction> solve(TileMaze maze) {
+		return solve(maze, new HashSet<>());
+	}
+	
+	public static List<Direction> solve(TileMaze maze, Set<TileMaze> seen) {
 		long start = System.currentTimeMillis();
 		
-		Queue<TileMaze> queue = new PriorityQueue<>((a,b) -> b.getX() - a.getX());
+		Queue<TileMaze> queue = new PriorityQueue<>((a,b) -> (b.getX() - b.delay) - (a.getX() + a.delay));
 		List<TileMaze> next = new ArrayList<>();
 		TileMaze current, clone, best = null;
-		Tile tile;
-		
-		Set<TileMaze> seen = new HashSet<>();
+		Tile tile, nextTile;
 		
 		queue.add(maze);
 		seen.add(maze);
@@ -233,7 +251,12 @@ public class TilePuzzleSolver {
 			
 			while(!queue.isEmpty()) {
 				current = queue.poll();
-				tile = current.getTile(current.getX(), current.getY());
+				if(current.delay > 0) {
+					next.add(current);
+					current.delay--;
+					continue;
+				}
+				tile = current.getTile();
 				for(Direction direction : tile.getAvailableDirections(current.entry)) {
 					clone = current.clone();
 					clone.previous = current;
@@ -244,7 +267,11 @@ public class TilePuzzleSolver {
 							continue;
 						}
 						
-						if(clone.getX() == clone.getWidth() - 1) {
+						nextTile = clone.getTile();
+						if(nextTile.getType() == Tile.Color.YELLOW) {
+							clone.delay = 5;
+						}
+						else if(clone.getX() == clone.getWidth() - 1 && (nextTile.getType() == null || nextTile.getAvailableDirections(direction).contains(Direction.RIGHT))) {
 							if(DEBUG) System.out.printf("Finished in %dms\n", System.currentTimeMillis() - start);
 							return convertToList(clone);
 						}
